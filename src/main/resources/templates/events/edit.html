@@ -11,7 +11,7 @@
 
     <h1>Edit Event</h1>
 
-    <form th:action="@{/clubs/{clubId}/events/{eventId}(clubId=${clubId}, eventId=${eventid})}"
+    <form th:action="@{/clubs/{clubId}/events/{eventId}(clubId=${clubId}, eventId=${eventId})}"
           th:object="${event}"
           method="post">
 
@@ -71,7 +71,7 @@
             </button>
 
             <a class="btn btn-secondary"
-               th:href="@{/clubs/{clubId}/events/{eventId}(clubId=${clubId}, eventId=${eventid})}">
+               th:href="@{/clubs/{clubId}/events/{eventId}(clubId=${clubId}, eventId=${eventId})}">
                 Cancel
             </a>
         </div>
