@@ -140,9 +140,9 @@ class NovaEventsService {
             id = nextEventId.getAndIncrement(),
             clubId = clubId,
             name = eventForm.name,
-            date = eventForm.date,
+            date = eventForm.date!!,
             location = eventForm.location ?: "",
-            type = eventForm.type,
+            type = eventForm.type!!,
             description = eventForm.description ?: ""
         )
 
