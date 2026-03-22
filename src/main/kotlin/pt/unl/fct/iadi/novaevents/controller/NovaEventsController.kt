@@ -130,22 +130,13 @@ class NovaEventsController(private val service: NovaEventsService) {
         }
 
         try {
-            val eventEdited = service.editEvent(clubId, eventId, event);
-
-            var model = ModelMap();
-
-            model.addAttribute("event", eventEdited)
-
-            return "redirect:/clubs/${eventEdited.clubId}/events/${eventEdited.id}"
+            val updated = service.editEvent(clubId, eventId, event)
+            return "redirect:/clubs/${updated.clubId}/events/${updated.id}"
         } catch (e: IllegalArgumentException) {
-            bindingResult.rejectValue(
-                "name",
-                "error.event",
-                e.message ?: "Error"
-            )
+            e.message?.let { bindingResult.rejectValue("name", "error.event", it) }
             model.addAttribute("clubId", clubId)
             model.addAttribute("eventId", eventId)
-            return "events/create"
+            return "events/edit"
         }
     }
 
