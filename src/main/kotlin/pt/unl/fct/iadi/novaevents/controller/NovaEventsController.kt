@@ -8,6 +8,7 @@ import org.springframework.ui.ModelMap
 import org.springframework.validation.BindingResult
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.ModelAttribute
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PutMapping
@@ -79,7 +80,12 @@ class NovaEventsController(private val service: NovaEventsService) {
     }
 
     @PostMapping("/clubs/{id}/events")
-    fun createEvent(@PathVariable id: Long, @Valid event: EventForm, bindingResult: BindingResult, model: Model): String {
+    fun createEvent(
+        @PathVariable id: Long,
+        @Valid @ModelAttribute("event") event: EventForm,
+        bindingResult: BindingResult,
+        model: Model
+    ): String {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("clubId", id)
@@ -90,18 +96,19 @@ class NovaEventsController(private val service: NovaEventsService) {
             val eventCreated = service.createEvent(id, event);
             return "redirect:/clubs/${id}/events/${eventCreated.id}"
         } catch (e: IllegalArgumentException) {
-            bindingResult.rejectValue(
-                "name",
-                "error.event",
-                e.message ?: "Error"
-            )
+            bindingResult.rejectValue("name", "duplicate.name", e.message ?: "An event with this name already exists")
             model.addAttribute("clubId", id)
+            model.addAttribute("event", event)
             return "events/create"
         }
     }
 
     @GetMapping("/clubs/{clubId}/events/{eventId}/edit")
-    fun editEvent(@PathVariable clubId: Long, @PathVariable eventId: Long, model: Model): String{
+    fun editEvent(
+        @PathVariable clubId: Long,
+        @PathVariable eventId: Long,
+        model: Model
+    ): String{
 
         var event = service.getEventDetails(clubId, eventId)
 
@@ -121,7 +128,13 @@ class NovaEventsController(private val service: NovaEventsService) {
     }
 
     @PutMapping("/clubs/{clubId}/events/{eventId}")
-    fun editEvent(@PathVariable clubId: Long, @PathVariable eventId: Long, @Valid event: EventForm, bindingResult: BindingResult, model: ModelMap): String {
+    fun editEvent(
+        @PathVariable clubId: Long,
+        @PathVariable eventId: Long,
+        @Valid @ModelAttribute("event") event: EventForm,
+        bindingResult: BindingResult,
+        model: ModelMap
+    ): String {
 
         if (bindingResult.hasErrors()) {
             model.addAttribute("clubId", clubId)
@@ -133,9 +146,10 @@ class NovaEventsController(private val service: NovaEventsService) {
             val updated = service.editEvent(clubId, eventId, event)
             return "redirect:/clubs/${updated.clubId}/events/${updated.id}"
         } catch (e: IllegalArgumentException) {
-            e.message?.let { bindingResult.rejectValue("name", "error.event", it) }
+            bindingResult.rejectValue("name", "duplicate.name", e.message ?: "An event with this name already exists")
             model.addAttribute("clubId", clubId)
             model.addAttribute("eventId", eventId)
+            model.addAttribute("event", event)
             return "events/edit"
         }
     }
