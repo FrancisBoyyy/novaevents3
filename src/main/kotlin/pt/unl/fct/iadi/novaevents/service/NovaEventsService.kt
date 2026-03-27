@@ -48,12 +48,12 @@ class NovaEventsService(
     }
 
     fun getAllEvents(
-        typeId: Long? = null,
+        type: String? = null,
         clubId: Long? = null,
         from: LocalDate? = null,
         to: LocalDate? = null
     ) : List<EventResponse> {
-        val events = eventRepository.findWithFilters(typeId, clubId, from, to)
+        val events = eventRepository.findWithFilters(type, clubId, from, to)
 
         return events.map { event ->
             EventResponse(

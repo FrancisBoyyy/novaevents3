@@ -45,14 +45,14 @@ class NovaEventsController(private val service: NovaEventsService) {
 
     @GetMapping("/events")
     fun listEvents(
-        @RequestParam(required = false) typeId: Long?,
+        @RequestParam(required = false) type: String?,
         @RequestParam(required = false) clubId: Long?,
         @RequestParam(required = false) from: LocalDate?,
         @RequestParam(required = false) to: LocalDate?,
         model: Model
     ): String {
 
-        val events = service.getAllEvents(typeId, clubId, from, to)
+        val events = service.getAllEvents(type, clubId, from, to)
         val clubs = service.getAllClubs()
         val eventTypes = service.getEventTypes()
 
@@ -103,6 +103,8 @@ class NovaEventsController(private val service: NovaEventsService) {
             bindingResult.rejectValue("name", "duplicate.name", e.message ?: "An event with this name already exists")
             model.addAttribute("clubId", id)
             model.addAttribute("event", event)
+            val eventTypes = service.getEventTypes()
+            model.addAttribute("eventTypes", eventTypes)
             return "events/create"
         }
     }
@@ -157,6 +159,8 @@ class NovaEventsController(private val service: NovaEventsService) {
             model.addAttribute("clubId", clubId)
             model.addAttribute("eventId", eventId)
             model.addAttribute("event", event)
+            val eventTypes = service.getEventTypes()
+            model.addAttribute("eventTypes", eventTypes)
             return "events/edit"
         }
     }
