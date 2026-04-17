@@ -116,7 +116,7 @@
         </dependency>
         <dependency>
             <groupId>org.htmlunit</groupId>
-            <artifactId>htmluniot</artifactId>
+            <artifactId>htmlunit</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
