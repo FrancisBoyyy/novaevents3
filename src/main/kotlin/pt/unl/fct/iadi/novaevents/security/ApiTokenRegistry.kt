@@ -1,4 +1,4 @@
-package pt.unl.fct.iadi.bookstore.security
+package pt.unl.fct.iadi.novaevents.security
 
 import org.springframework.stereotype.Component
 

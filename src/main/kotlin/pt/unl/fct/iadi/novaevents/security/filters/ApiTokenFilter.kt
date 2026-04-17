@@ -1,10 +1,11 @@
-package pt.unl.fct.iadi.bookstore.security
+package pt.unl.fct.iadi.novaevents.security.filters
 
 import jakarta.servlet.FilterChain
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.stereotype.Component
 import org.springframework.web.filter.OncePerRequestFilter
+import pt.unl.fct.iadi.novaevents.security.ApiTokenRegistry
 
 @Component
 class ApiTokenFilter(val apiTokenRegistry : ApiTokenRegistry) : OncePerRequestFilter() {

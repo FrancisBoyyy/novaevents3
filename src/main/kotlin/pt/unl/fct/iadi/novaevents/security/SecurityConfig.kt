@@ -1,4 +1,4 @@
-package pt.unl.fct.iadi.bookstore.security
+package pt.unl.fct.iadi.novaevents.security
 
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeIn
 import io.swagger.v3.oas.annotations.enums.SecuritySchemeType
@@ -10,63 +10,67 @@ import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
+import org.springframework.security.config.http.SessionCreationPolicy
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.provisioning.UserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter
+import org.springframework.security.web.context.RequestAttributeSecurityContextRepository
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
+import org.springframework.security.web.savedrequest.CookieRequestCache
+import pt.unl.fct.iadi.novaevents.repository.AppUserRepository
+import pt.unl.fct.iadi.novaevents.security.filters.ApiTokenFilter
+import pt.unl.fct.iadi.novaevents.security.filters.JwtCookieAuthFilter
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@SecuritySchemes(
-    SecurityScheme(
-        name = "apiToken",
-        type = SecuritySchemeType.APIKEY,
-        `in` = SecuritySchemeIn.HEADER,
-        paramName = "X-Api-Token",
-    ),
-    SecurityScheme(
-        name = "basicAuth",
-        type = SecuritySchemeType.HTTP,
-        scheme = "basic"
-    ),
-)
-class SecurityConfig {
+class SecurityConfig(private val appUserRepository: AppUserRepository) {
 
     @Bean
     fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun userDetailsService(encoder: PasswordEncoder) = InMemoryUserDetailsManager(
-        User.withUsername("editor1")
-            .password(encoder.encode("editor1pass"))
-            .roles("EDITOR")
-            .build(),
-        User.withUsername("editor2")
-            .password(encoder.encode("editor2pass"))
-            .roles("EDITOR")
-            .build(),
-        User.withUsername("admin")
-            .password(encoder.encode("adminpass"))
-            .roles("ADMIN")
-            .build()
-    )
+    fun userDetailsManager(): UserDetailsManager = AppUserDetailsManager(appUserRepository)
 
     @Bean
-    fun securityFilterChain(http: HttpSecurity, apiTokenFilter: ApiTokenFilter): SecurityFilterChain {
+    fun securityFilterChain(http: HttpSecurity, jwtCookieAuthFilter: JwtCookieAuthFilter, jwtAuthSuccessHandler: JwtAuthSuccessHandler): SecurityFilterChain {
         http
-            .csrf{it.disable()}
+            .sessionManagement {
+                it.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            }
+            .securityContext {
+                it.securityContextRepository(RequestAttributeSecurityContextRepository())
+            }
+            .requestCache { it.requestCache(CookieRequestCache()) }
+            .csrf { csrf ->
+                csrf.csrfTokenRepository(CookieCsrfTokenRepository())
+                csrf.csrfTokenRequestHandler(CsrfTokenRequestAttributeHandler())
+            }
             .httpBasic {}
-            .addFilterBefore(apiTokenFilter, UsernamePasswordAuthenticationFilter::class.java)
+            .addFilterBefore(jwtCookieAuthFilter, UsernamePasswordAuthenticationFilter::class.java)
             .authorizeHttpRequests { auth ->
                 auth
-                    .requestMatchers("/swagger-ui/**","/v3/api-docs/**").permitAll()
-                    .requestMatchers(HttpMethod.GET, "/**").permitAll()
-                    .requestMatchers(HttpMethod.DELETE, "/books/*/reviews/*").authenticated()
-                    .requestMatchers(HttpMethod.DELETE, "/**").hasRole("ADMIN")
+                    //.requestMatchers("/swagger-ui/**","/v3/api-docs/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/clubs", "/clubs/**", "/events", "/clubs/*/events/**").permitAll()
+                    .requestMatchers(HttpMethod.POST, "/clubs/*/events").hasAnyRole("ADMIN", "EDITOR")
+                    .requestMatchers(HttpMethod.PUT, "/clubs/*/events/**").hasAnyRole("ADMIN", "EDITOR")
+                    .requestMatchers(HttpMethod.PATCH, "/clubs/*/events/**").hasAnyRole("ADMIN", "EDITOR")
+                    .requestMatchers(HttpMethod.DELETE, "/clubs/*/events/**").hasRole("ADMIN")
                     .anyRequest().authenticated()
+            }
+            .formLogin { form ->
+                form.loginPage("/login").permitAll()
+                form.successHandler(jwtAuthSuccessHandler)
+            }
+            .logout{ logout ->
+                logout
+                    .deleteCookies("JSESSIONID", "jwt")
+                    .logoutSuccessHandler { _, response, _ -> response.status = 200 }
             }
             .exceptionHandling { exceptions ->
                 exceptions

@@ -2,6 +2,7 @@ package pt.unl.fct.iadi.novaevents.controller
 
 import jakarta.validation.Valid
 import org.springframework.http.MediaType
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.stereotype.Controller
 import org.springframework.ui.Model
 import org.springframework.ui.ModelMap
@@ -110,6 +111,7 @@ class NovaEventsController(private val service: NovaEventsService) {
     }
 
     @GetMapping("/clubs/{clubId}/events/{eventId}/edit")
+    @PreAuthorize("@eventSecurity.isOwner(#id, authentication)")
     fun editEvent(
         @PathVariable clubId: Long,
         @PathVariable eventId: Long,
@@ -166,6 +168,7 @@ class NovaEventsController(private val service: NovaEventsService) {
     }
 
     @GetMapping("/clubs/{clubId}/events/{eventId}/delete")
+    @PreAuthorize("hasRole('ADMIN') or ")
     fun deleteEvent(@PathVariable clubId: Long, @PathVariable eventId: Long, model: Model): String{
 
         var event = service.getEventDetails(clubId, eventId)
