@@ -45,7 +45,7 @@ class AppUserDetailsManager(private val userRepository: AppUserRepository, priva
 
         appUser.roles = roles
 
-        userRepository.createUser(appUser)
+        userRepository.save(appUser)
     }
 
     override fun updateUser(user: UserDetails?) {
