@@ -8,6 +8,7 @@ import pt.unl.fct.iadi.novaevents.controller.dto.response.EventResponse
 import pt.unl.fct.iadi.novaevents.domain.Event
 import pt.unl.fct.iadi.novaevents.domain.EventType
 import pt.unl.fct.iadi.novaevents.domain.EventTypeRepository
+import pt.unl.fct.iadi.novaevents.repository.AppUserRepository
 import pt.unl.fct.iadi.novaevents.repository.ClubRepository
 import pt.unl.fct.iadi.novaevents.repository.EventRepository
 import java.time.LocalDate
@@ -16,7 +17,8 @@ import java.time.LocalDate
 class NovaEventsService(
     private val clubRepository: ClubRepository,
     private val eventRepository: EventRepository,
-    private val eventTypeRepository: EventTypeRepository
+    private val eventTypeRepository: EventTypeRepository,
+    private val appUserRepository: AppUserRepository
 ) {
     fun getAllClubs() : List<ClubResponse> {
         val clubs = clubRepository.findAllWithEvents()
@@ -43,7 +45,7 @@ class NovaEventsService(
             name = club.name!!,
             description = club.description!!,
             category = club.category!!,
-            events = events.map { it.toResponse(club.name!!) }
+            events = events.map { it.toResponse(club.name!!, it.owner!!.username!!) }
         )
     }
 
@@ -60,6 +62,7 @@ class NovaEventsService(
                 id = event.id!!,
                 clubId = event.club!!.id!!,
                 clubName = event.club!!.name!!,
+                ownerName = event.owner!!.username!!,
                 name = event.name!!,
                 date = event.date!!,
                 location = event.location!!,
@@ -80,6 +83,7 @@ class NovaEventsService(
             id = event.id!!,
             clubId = event.club!!.id!!,
             clubName = club.name!!,
+            ownerName = event.owner!!.username!!,
             name = event.name!!,
             date = event.date!!,
             location = event.location!!,
@@ -88,7 +92,7 @@ class NovaEventsService(
         )
     }
 
-    fun createEvent(clubId: Long, eventForm: EventForm): EventResponse {
+    fun createEvent(clubId: Long, eventForm: EventForm, ownerUsername: String): EventResponse {
         val club = clubRepository.findById(clubId)
             .orElseThrow { NoSuchElementException("Club not found") }
 
@@ -99,8 +103,12 @@ class NovaEventsService(
             throw IllegalArgumentException("An event with this name already exists")
         }
 
+        val owner = appUserRepository.findByUsername(ownerUsername)
+            ?: throw NoSuchElementException("User with username $ownerUsername not found")
+
         val event = Event(
             club = club,
+            owner = owner,
             name = eventForm.name,
             date = eventForm.date!!,
             location = eventForm.location ?: "",
@@ -109,7 +117,7 @@ class NovaEventsService(
         )
 
         val saved = eventRepository.save(event)
-        return saved.toResponse(club.name!!)
+        return saved.toResponse(club.name!!, saved.owner!!.username!!)
     }
 
     fun editEvent(clubId: Long, eventId: Long, eventForm: EventForm): EventResponse {
@@ -137,7 +145,7 @@ class NovaEventsService(
         )
 
         val saved = eventRepository.save(updated)
-        return saved.toResponse(club.name!!)
+        return saved.toResponse(club.name!!, saved.owner!!.username!!)
     }
 
     fun deleteEvent(clubId: Long, eventId: Long): Long {
@@ -158,11 +166,12 @@ class NovaEventsService(
         return eventTypes
     }
 
-    private fun Event.toResponse(clubName: String) =
+    private fun Event.toResponse(clubName: String, owner: String) =
         EventResponse(
             id = id!!,
             clubId = club!!.id!!,
             clubName = clubName,
+            ownerName = owner,
             name = name!!,
             date = date!!,
             location = location?: "",

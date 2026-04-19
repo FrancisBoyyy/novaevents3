@@ -6,6 +6,7 @@ data class EventResponse(
     val id: Long,
     val clubId: Long,
     val clubName: String, // necessary?
+    val ownerName: String,
     val name: String,
     val date: LocalDate,
     val location: String,

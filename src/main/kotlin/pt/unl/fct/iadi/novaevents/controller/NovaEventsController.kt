@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import pt.unl.fct.iadi.novaevents.service.NovaEventsService
 import pt.unl.fct.iadi.novaevents.controller.dto.request.EventForm
 import pt.unl.fct.iadi.novaevents.domain.EventType
+import java.security.Principal
 import java.time.LocalDate
 
 @Controller
@@ -89,7 +90,8 @@ class NovaEventsController(private val service: NovaEventsService) {
         @PathVariable id: Long,
         @Valid @ModelAttribute("event") event: EventForm,
         bindingResult: BindingResult,
-        model: Model
+        model: Model,
+        principal: Principal
     ): String {
 
         if (bindingResult.hasErrors()) {
@@ -98,7 +100,7 @@ class NovaEventsController(private val service: NovaEventsService) {
         }
 
         try {
-            val eventCreated = service.createEvent(id, event);
+            val eventCreated = service.createEvent(id, event, principal.name);
             return "redirect:/clubs/${id}/events/${eventCreated.id}"
         } catch (e: IllegalArgumentException) {
             bindingResult.rejectValue("name", "duplicate.name", e.message ?: "An event with this name already exists")

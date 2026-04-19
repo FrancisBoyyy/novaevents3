@@ -6,11 +6,13 @@ import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.security.provisioning.UserDetailsManager
+import org.springframework.stereotype.Component
 import pt.unl.fct.iadi.novaevents.domain.AppUser
 import pt.unl.fct.iadi.novaevents.domain.enums.AppRole
 import pt.unl.fct.iadi.novaevents.domain.enums.Roles
 import pt.unl.fct.iadi.novaevents.repository.AppUserRepository
 
+@Component
 class AppUserDetailsManager(private val userRepository: AppUserRepository, private val passwordEncoder: PasswordEncoder) : UserDetailsManager {
     override fun loadUserByUsername(username: String): UserDetails {
         val user: AppUser = userRepository.findByUsername(username) ?:
