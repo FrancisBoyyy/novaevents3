@@ -79,6 +79,7 @@ class DataInitializer(
             ),
             Event(
                 club = clubs["Chess Club"],
+                owner = alice,
                 name = "Spring Chess Tournament",
                 date = LocalDate.parse("2026-04-05"),
                 location = "Main Hall",
