@@ -154,7 +154,7 @@ class DataInitializer(
 
             Event(
                 club = clubs["Hiking & Outdoors Club"],
-
+                owner = alice,
                 name = "Serra da Arrábida Hike",
                 date = LocalDate.parse("2026-03-29"),
                 location = "Bus Stop Central",
